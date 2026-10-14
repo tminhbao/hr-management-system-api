@@ -3,6 +3,9 @@ package com.alantr.hrms_api.controller;
 import com.alantr.hrms_api.helper.ApiResponse;
 import com.alantr.hrms_api.model.User;
 import com.alantr.hrms_api.service.UserService;
+
+import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -47,7 +50,7 @@ public class UserController {
 
     // POST /users - Tạo user mới: 201 Created với header Location, 409 CONFLICT nếu trùng lặp
     @PostMapping
-    public ResponseEntity<ApiResponse<User>> createUser(@RequestBody User user) {
+    public ResponseEntity<ApiResponse<User>> createUser(@Valid @RequestBody User user) {
         if (user.getEmail() != null && userService.existsByEmail(user.getEmail())) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(ApiResponse.conflict("Email '" + user.getEmail() + "' đã tồn tại trong hệ thống"));
