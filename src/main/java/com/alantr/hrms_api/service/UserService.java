@@ -2,15 +2,19 @@ package com.alantr.hrms_api.service;
 
 import com.alantr.hrms_api.model.User;
 import com.alantr.hrms_api.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class UserService {
-    @Autowired
-    private UserRepository userRepository;
+
+    private final UserRepository userRepository;
+
+    // Constructor Injection
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     // Lấy tất cả users
     public List<User> findAll() {
@@ -19,7 +23,7 @@ public class UserService {
 
     // Lấy user theo id
     public User findById(Long id) {
-        return userRepository.findById(id);
+        return userRepository.findById(id).orElse(null);
     }
 
     // Tạo mới user
@@ -29,12 +33,26 @@ public class UserService {
 
     // Cập nhật user theo id
     public User update(Long id, User user) {
-        return userRepository.update(id, user);
+        User existingUser = findById(id);
+        if (existingUser != null) {
+            existingUser.setName(user.getName());
+            existingUser.setEmail(user.getEmail());
+            existingUser.setPassword(user.getPassword());
+            existingUser.setAge(user.getAge());
+            existingUser.setAddress(user.getAddress());
+            existingUser.setGender(user.getGender());
+            existingUser.setAvatar(user.getAvatar());
+            return userRepository.save(existingUser);
+        }
+        return null;
     }
 
     // Xóa user theo id
     public boolean deleteById(Long id) {
-        return userRepository.deleteById(id);
+        if (userRepository.existsById(id)) {
+            userRepository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 }
-
