@@ -31,6 +31,14 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public User create(User user) {
+        return save(user);
+    }
+
+    public boolean existsById(Long id) {
+        return userRepository.existsById(id);
+    }
+
     // Cập nhật user theo id
     public User update(Long id, User user) {
         User existingUser = findById(id);
