@@ -39,6 +39,10 @@ public class UserService {
         return userRepository.existsById(id);
     }
 
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
     // Cập nhật user theo id
     public User update(Long id, User user) {
         User existingUser = findById(id);

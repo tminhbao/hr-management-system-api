@@ -1,5 +1,6 @@
 package com.alantr.hrms_api.controller;
 
+import com.alantr.hrms_api.helper.ApiResponse;
 import com.alantr.hrms_api.model.User;
 import com.alantr.hrms_api.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -22,51 +23,58 @@ public class UserController {
 
     private final UserService userService;
 
-    // Constructor Injection
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
-    // GET /users: 200 OK
+    // GET /users - Lấy tất cả users: 200 OK
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
+    public ResponseEntity<ApiResponse<List<User>>> getAllUsers() {
         List<User> users = userService.findAll();
-        return ResponseEntity.ok(users);
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách người dùng thành công", users));
     }
 
-    // GET /users/{id}: 200 OK nếu tìm thấy, 404 Not Found nếu không
+    // GET /users/{id} - Lấy user theo id: 200 OK nếu tìm thấy, 404 NOT_FOUND nếu không
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<User>> getUserById(@PathVariable Long id) {
         User user = userService.findById(id);
         if (user == null) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.notFound("Không tìm thấy người dùng với ID: " + id));
         }
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(ApiResponse.success("Lấy thông tin người dùng thành công", user));
     }
 
-    // POST /users: 201 Created với header Location
+    // POST /users - Tạo user mới: 201 Created với header Location, 409 CONFLICT nếu trùng lặp
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
+    public ResponseEntity<ApiResponse<User>> createUser(@RequestBody User user) {
+        if (user.getEmail() != null && userService.existsByEmail(user.getEmail())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ApiResponse.conflict("Email '" + user.getEmail() + "' đã tồn tại trong hệ thống"));
+        }
         User createdUser = userService.create(user);
         URI location = URI.create("/users/" + createdUser.getId());
-        return ResponseEntity.created(location).body(createdUser);
+        return ResponseEntity.created(location)
+                .body(ApiResponse.created("Tạo mới người dùng thành công", createdUser));
     }
 
-    // PUT /users/{id}: 200 OK nếu tìm thấy, 404 Not Found nếu không
+    // PUT /users/{id} - Cập nhật user: 200 OK nếu tìm thấy, 404 NOT_FOUND nếu không
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
+    public ResponseEntity<ApiResponse<User>> updateUser(@PathVariable Long id, @RequestBody User user) {
         User updatedUser = userService.update(id, user);
         if (updatedUser == null) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.notFound("Không tìm thấy người dùng với ID: " + id));
         }
-        return ResponseEntity.ok(updatedUser);
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật thông tin người dùng thành công", updatedUser));
     }
 
-    // DELETE /users/{id}: 204 No Content nếu tìm thấy, 404 Not Found nếu không
+    // DELETE /users/{id} - Xóa user: 204 No Content nếu tìm thấy, 404 NOT_FOUND nếu không
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
         if (!userService.existsById(id)) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.notFound("Không tìm thấy người dùng với ID: " + id + " để xóa"));
         }
         userService.deleteById(id);
         return ResponseEntity.noContent().build();
