@@ -2,6 +2,7 @@ package com.alantr.hrms_api.service;
 
 import com.alantr.hrms_api.model.User;
 import com.alantr.hrms_api.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,10 +11,12 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     // Constructor Injection
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     // Lấy tất cả users
@@ -28,11 +31,14 @@ public class UserService {
 
     // Tạo mới user
     public User save(User user) {
-        return userRepository.save(user);
+        return create(user);
     }
 
     public User create(User user) {
-        return save(user);
+        if (user.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
+        return userRepository.save(user);
     }
 
     public boolean existsById(Long id) {
@@ -49,7 +55,9 @@ public class UserService {
         if (existingUser != null) {
             existingUser.setName(user.getName());
             existingUser.setEmail(user.getEmail());
-            existingUser.setPassword(user.getPassword());
+            if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+                existingUser.setPassword(passwordEncoder.encode(user.getPassword()));
+            }
             existingUser.setAge(user.getAge());
             existingUser.setAddress(user.getAddress());
             existingUser.setGender(user.getGender());
